@@ -373,7 +373,7 @@ tr:nth-child(odd) {background: #FFF}
 					"</tr>" + 
 				"</thead>" + 
 				"<tbody>";
-			for(var i=0;i<Math.min(10,this.tag_list.length);i++)
+			for(var i=0;i<Math.min(15,this.tag_list.length);i++)
 			{
 				table_html += "<tr>"+
 							"<td><b>"+this.tag_list[i][0]+"</b></td>" +
@@ -442,7 +442,7 @@ tr:nth-child(odd) {background: #FFF}
 								"</a>" + 
 							"</center></td>" + 
 							"<td><center>"+ 
-								"<a href='https://steemit.com/" + this.data[i].url + "/' target='_blank'>" + 
+								"<a href='https://steemit.com" + this.data[i].url + "/' target='_blank'>" + 
 								this.data[i].title +
 								"</a>" + 
 							"</center></td>" + 

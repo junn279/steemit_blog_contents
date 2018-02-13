@@ -1,0 +1,698 @@
+<!--
+// Name: Make Steemit Blog Contents
+// Description: A table (steemit post list) markdown source generator 
+//
+// Author: JUNN (junn279@gmail.com)
+// Site: www.junn.in
+// Copyright (C) 2018. JUNN.IN
+//
+//////////////////////////////////////////////////////////////////////////////////////////
+//
+// Licensetype: GNU General Public License (GPL)
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, version 2.0.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License 2.0 for more details.
+//
+// A copy of the GPL 2.0 should have been included with the program.
+// If not, see http://www.gnu.org/licenses/
+-->
+<html>
+<head>
+<style>
+@import url(http://fonts.googleapis.com/earlyaccess/nanumgothic.css);
+body {
+    font-family: "Nanum Gothic", sans-serif;
+    font-size:0.8em;
+}
+a:link {
+    color: #00c6a1;
+    text-decoration: none;
+}
+
+/* visited link */
+a:visited {
+    color: #00c6a1;
+    text-decoration: none;
+}
+
+/* mouse over link */
+a:hover {
+    color: hotpink;
+    text-decoration: underline;
+}
+
+/* selected link */
+a:active {
+    color: #00c6a1;
+    text-decoration: none;
+}
+
+#top, #classify, #head
+{
+	color:white;
+	background-color: black;
+	padding:10px;
+}
+#contents
+{
+	display: block;
+	/*margin: auto;*/
+	width: 800px;
+	max-width: 800px;
+}
+img
+{
+	max-width: 800px;
+}
+#source {
+    width: 100%;
+    height: 200px;
+    border: 1px solid #ccc;
+    padding: 5px;
+    resize: both;
+    overflow: auto;
+}
+table
+{
+	border: 2px solid black;
+	font-size:0.9em;
+}
+.markdown
+{
+	width:100%;
+	height:100px;
+}
+.tag_table
+{
+	padding: 2px;
+	margin-bottom: 5px;
+	margin-top : 5px;
+}
+.tag_table thead
+{
+	font-weight: bold;
+	font-size:1em;
+}
+.post_table
+{
+	padding: 2px;
+	margin-top : 5px;
+	margin-bottom: 5px;	
+}
+.post_table thead
+{
+	font-weight:bold;
+	font-size:1em;
+}
+#head
+{
+	border: 2px solid black;
+	padding: 5px;
+	margin-bottom: 5px;
+	margin-top: 5px;
+}
+.wrapper_1
+{
+	border:2px solid black;
+	padding: 5px;
+}
+.wrapper_2
+{
+	border:2px solid #aaaaaa;
+	padding: 5px;
+	margin-left:50px;
+	margin-bottom: 5px;
+	margin-top: 5px;
+	/*padding-left:35px;*/
+}
+.wrapper_3
+{
+	border:2px solid #bbbbbb;
+	padding: 5px;
+	margin-left:100px;
+	margin-bottom: 5px;
+	margin-top: 5px;
+	/*padding-left:35px;*/
+}
+
+tr:nth-child(even) {background: #EEE}
+tr:nth-child(odd) {background: #FFF}
+
+</style>
+<script src="./jquery-3.3.1.min.js"></script>
+<script src="./jquery.cookie.js"></script>
+<script src="https://cdn.rawgit.com/showdownjs/showdown/1.8.6/dist/showdown.min.js"></script>
+<script src="https://cdn.steemjs.com/lib/latest/steem.min.js"></script>
+
+<script>
+	function Resteem()
+	{
+		var tag = "_resteemed";
+		if(rootNode.get_child_index_by_name(tag) == -1)
+		{
+			var blog_id = $("#id").val();
+			var newNode = null;
+			newNode = new TagNode(tag, rootNode.level+1,rootNode);
+			for(var i=0;i<rootNode.data.length;i++)
+			{
+				if(rootNode.data[i].author != blog_id)
+				{
+					newNode.add_data(rootNode.data[i]);
+					rootNode.data.splice(i,1);
+					i--;
+				}
+			}
+			rootNode.child.push(newNode);
+			refreshAll();
+		}
+		else
+		{
+			MergeAll();
+		}
+
+	}
+	function MergeAll()
+	{
+		for(var i=rootNode.child.length-1;i>=0;i--)
+		{
+			rootNode.remove_child(rootNode.child[i].name);
+		}
+		refreshAll();
+	}
+	
+	function autoClassify()
+	{
+		var high_set = $('#set_high').val();
+		var low_set = $('#set_low').val();
+
+		console.log("AUTOCLASSIFY",high_set,low_set);	
+	
+	}
+	function refreshAll()
+	{
+		console.log("RefreshAll");
+		clearContents("#contents");
+		rootNode.show("#contents");
+
+	}
+	function Extract(json_path, tag)
+	{
+		//alert(fromID + " " +tag);
+		console.log("Extract Btn Call",json_path, tag);	
+	
+		thisNode = rootNode;
+		for(var i=1;i<json_path.length;i++)
+		{
+			thisNode = thisNode.get_child_by_name(json_path[i]);
+		}
+
+		thisNode.extract_by_tag(tag);
+		//node = findByID(fromID);
+		//console.log("find", node);
+	}
+	function ShowMarkdown(json_path)
+	{
+		thisNode = rootNode;
+		for(var i=1;i<json_path.length;i++)
+		{
+			thisNode = thisNode.get_child_by_name(json_path[i]);
+		}	
+		$('#'+thisNode.path_to_markdown_table_ID()).show(1000);
+	}
+	function HideMarkdown(json_path)
+	{
+		thisNode = rootNode;
+		for(var i=1;i<json_path.length;i++)
+		{
+			thisNode = thisNode.get_child_by_name(json_path[i]);
+		}
+		$('#'+thisNode.path_to_markdown_table_ID()).hide();
+	}
+	function Remove(json_path)	//json_path.length must be larger than 1
+	{
+		console.log("REMOVE",json_path);	
+		childNode = rootNode;
+		parentNode = null;
+		childIndex = -1;
+		for(var i=1;i<json_path.length;i++)
+		{
+			childNode = childNode.get_child_by_name(json_path[i]);
+			parentNode = childNode.parent;
+		}		
+		console.log("FIND NODE",parentNode.name,childNode.name);
+		parentNode.remove_child(childNode.name);
+		refreshAll();
+	}
+
+	function LoadingOn()
+	{
+		$('#loading').html('<img src="https://junn.in/loading.gif">');
+	}
+	function LoadingOff()
+	{
+		$('#loading').html('');
+	}
+	function writeContents(id,text)
+	{
+		var old_src = $(id).html();
+		$(id).html(old_src + text);
+	}
+	function clearContents(id)
+	{
+		console.log("CLEAR",id);
+		$(id).html("")
+	}
+	function ButtonChange()
+	{
+		$('#submit_btn').prop('disabled',true);
+		$('#id').prop('disabled', true);
+		$('#set_high').prop('disabled',false);
+		$('#set_low').prop('disabled', false);
+		$('#classify_btn').prop('disabled', false);
+	}
+
+	function TagNode(name,level,parent) {
+		this.name = name
+		this.tag_list = [];
+		this.level = level;	//Indent level * 50px;
+		this.child = [];
+		this.parent = parent;
+		this.data = [];
+		this.id = name;/* + "_" + level;*/
+		this.searchpath = (this.parent==null)?[]:$.extend([],this.parent.searchpath);
+		this.searchpath.push(name);
+		console.log("NODE CREATED",this.name,this.searchpath,this.level);
+		/*
+		var mydata = {
+			0	'author'	:data.author,
+			1	'image_src'	:data.image_src,
+			2	'json_tags'	:(JSON.parse(data.json_metadata)['tags'])?JSON.parse(data.json_metadata)['tags']:null,
+			3	'last_update'	:data.last_update,
+			4	'permlink'	:data.permlink,
+			5	'title'		:data.title,
+			6	'url'		:data.url,
+			7	'created'	:data.created
+			};
+		*/
+		TagNode.prototype.remove_child = function(child_tag)
+		{
+			//this가 controler
+			var child_index;
+			var childNode = null;
+			for(var i=0;i<this.child.length;i++)
+			{
+				if(this.child[i].name == child_tag)
+				{
+					childNode = this.child[i];
+					child_index = i;
+					break;
+				}
+			}
+			console.log("REMOVE_CHILD","THIS:",this.name,"TAG:",child_tag,child_index,"CHILD NUM:",childNode.child.length);
+			for(var i=childNode.child.length-1;i>=0;i--)
+			{
+				childNode.remove_child(childNode.child[i].name);
+				childNode.child.splice(i,1);
+			}
+			var remove_count = 0;
+			for(var i=0;i<childNode.data.length;i++)
+			{	
+				remove_count++;
+				this.data.push(childNode.data[i]);
+			}
+			console.log("REMOVE DONE",childNode.name,childNode.searchpath,remove_count);
+			this.child.splice(child_index,1);
+			delete childNode;
+			console.log("THIS CHILD LENGTH",this.child.length);
+			//Child를 
+		}
+		TagNode.prototype.make_tag_list = function()
+		{
+			console.log("MAKE TAG LIST",this.searchpath)
+			var tags = {};
+			for(var i=0;i<this.data.length;i++)
+			{
+				for(var j=0;j<this.data[i].json_tags.length;j++)
+				{
+					if(!tags[this.data[i].json_tags[j]])
+					{
+						tags[this.data[i].json_tags[j]] = 1;
+					}
+					else
+					{
+						tags[this.data[i].json_tags[j]]++;
+					}
+				}	
+			}
+			var items = Object.keys(tags).map(function(key) {
+		    	return [key, tags[key]];
+			});
+			items.sort(function(first, second) 
+			{
+			   	return second[1] - first[1];
+			});
+			delete tags;
+			this.tag_list = items;
+		};
+
+		TagNode.prototype.show_tags = function(target_id)
+		{
+			console.log("SHOW TAG",this.name,target_id);
+			this.make_tag_list();
+			var table_html = 
+				"<table class='tag_table'>" + 
+				"<thead>" +
+					"<tr>" + 
+						"<td colspan=3>" + this.name + " Tags" + "</td>" + 
+					"</tr>" + 
+				"</thead>" + 
+				"<tbody>";
+			for(var i=0;i<Math.min(10,this.tag_list.length);i++)
+			{
+				table_html += "<tr>"+
+							"<td><b>"+this.tag_list[i][0]+"</b></td>" +
+							"<td>"+ this.tag_list[i][1] + "/" +this.data.length +"</td>"+
+							"<td>"+"<a href=# onclick='javascript:Extract("+JSON.stringify(this.searchpath)+",\""+this.tag_list[i][0]+"\");'>Extract</a>"+"</td>"+
+							"</tr>";
+			}
+			table_html += "</tbody>"  + "</table>";
+			//console.log(table_html);
+			writeContents(target_id,table_html)
+		};
+		TagNode.prototype.show_markdown = function(target_id)
+		{
+			console.log("SHOW MARKDOWN",this.name,target_id);
+			this.make_tag_list();
+			var textarea_html = 
+				"<textarea id='"+ this.path_to_markdown_table_ID()+"' class='markdown' style='display:none;'>"; 
+
+				textarea_html += "| <center>No.</center> | <center>Image</center> | <center>Author</center> | <center>Title</center> | <center>Created</center> |\r\n" +
+				"|:-------:|:-------:|:----:|:--------:|:-------:|\r\n";
+			this.data.sort(function(first, second) 
+			{
+		    	return new Date(second.created) - new Date(first.created);
+			});
+			for(var i=0;i<this.data.length;i++)
+			{
+				textarea_html += "| <center>" + (this.data.length - i) + "</center> | " +
+					 "[![Image]("+this.data[i].image_src+")](https://steemit.com" + 
+					 this.data[i].url + ")" + " | <center>["+ this.data[i].author + "](https://steemit.com/@" + this.data[i].author + ")</center> | [" + 
+					 this.data[i].title + "](https://steemit.com" +this.data[i].url + ") | <center>" + this.data[i].created.substring(0,10) +"</center> |\r\n";
+			}
+			textarea_html += "</textarea>";
+			//console.log(textarea_html);
+			writeContents(target_id,textarea_html)
+		};
+
+		TagNode.prototype.show_table = function(target_id)
+		{
+			console.log("SHOW TABLE",this.name,target_id);
+			var table_html = 
+				"<table class='post_table'>" + 
+				"<thead>" +
+					"<tr>" + 
+						"<td colspan=5>" + 
+							"Table : " + this.name +
+						"</td>" + 
+					"</tr>" + 
+				"</thead>" + 
+				"<tbody>";
+
+			//console.log("Before",this.data);
+			this.data.sort(function(first, second) 
+			{
+		    	return new Date(second.created) - new Date(first.created);
+			});
+			//console.log("After",this.data);
+
+			for(var i=0;i<this.data.length;i++)
+			{
+				table_html += "<tr>"+
+							"<td>" + (this.data.length - i) + "</td>" +
+							"<td><img src=\""+ this.data[i].image_src +"\" width=50></td>" +
+							"<td><center>"+ 
+								"<a href='https://steemit.com/@" + this.data[i].author + "/' target='_blank'>" + 
+								"@" + this.data[i].author + 
+								"</a>" + 
+							"</center></td>" + 
+							"<td><center>"+ 
+								"<a href='https://steemit.com/" + this.data[i].url + "/' target='_blank'>" + 
+								this.data[i].title +
+								"</a>" + 
+							"</center></td>" + 
+							"<td><center>"+ this.data[i].created.substring(0,10) + "</center></td>"+
+							"</tr>";
+			}
+			table_html += "</tbody>"  + "</table>";
+			//console.log(table_html);
+			writeContents(target_id,table_html)
+		};
+		TagNode.prototype.add_data = function(new_data)
+		{
+			console.log("ADD DATA",this.name, /*new_data,*/ this.data.length);
+			this.data.push(new_data);
+		};
+		TagNode.prototype.extract_by_tag = function(tag)
+		{
+			console.log("Extract By Tag",this.name,this.searchpath,tag);
+			var newNode = null;
+			if(thisNode.get_child_index_by_name(tag) == -1)
+			{
+				if(this.level + 1 == 4)
+				{
+					alert("No more extraction");
+					return;
+				}
+				newNode = new TagNode(tag,this.level + 1,this);
+				for(var i=0;i<this.data.length;i++)
+				{
+					if(this.data[i].json_tags.indexOf(tag) > -1)
+					{
+						newNode.add_data(this.data[i]);
+						this.data.splice(i,1);
+						i--;
+					}
+				}
+				this.child.push(newNode);
+			}
+			else
+			{
+				newNode = this.get_child_by_name(tag);
+				for(var i=0;i<this.data.length;i++)
+				{
+					if(this.data[i].json_tags.indexOf(tag) > -1)
+					{
+						newNode.add_data(this.data[i]);
+						this.data.splice(i,1);
+						i--;
+					}
+				}
+			}
+			refreshAll();
+		};
+		TagNode.prototype.show = function(parent_div)	//target_id 는 부모의 div...#..
+		{
+			writeContents(parent_div,
+				"<div id='"+this.path_to_div()+"' class='wrapper_"+this.level+"'>"+
+					"</div>");	//class=wrapper_1,2,3,4
+			console.log("SHOW",this.name,this.child.length);
+			if(this.child.length!=0)
+			{
+				this.show_child("#"+this.path_to_div());	//내 div 밑에다가
+			}
+			writeContents("#"+this.path_to_div(),
+			"<div>[<b>"+this.searchpath.join(" > ")+"</b>]" +
+				  "--[<a href='#' onclick='javascript:ShowMarkdown("+JSON.stringify(this.searchpath)+");'>SHOW MARKDOWN</a>]" +
+				 "--[<a href='#' onclick='javascript:HideMarkdown("+JSON.stringify(this.searchpath)+");'>HIDE MARKDOWN</a>]" + 
+					(this.parent?"--[<a href='#' onclick='javascript:Remove("+JSON.stringify(this.searchpath)+");'>REMOVE</a>]":"") + 
+				"--------[<a href='#' onclick='javascript:MergeAll();'>MERGE ALL</a>]" + 
+
+			"</div>");
+			this.show_tags("#"+this.path_to_div());
+			this.show_markdown("#"+this.path_to_div());	//Hidden status로 주어진다 
+			this.show_table("#"+this.path_to_div());
+			
+		};
+		TagNode.prototype.get_child_index_by_name = function(name)
+		{
+			console.log("GET_CHILD",this.name,name);
+			for(var i=0;i<this.child.length;i++)
+			{
+				if(this.child[i].name == name)
+				{
+					return i;
+				}
+			}
+			return -1;
+		};
+		TagNode.prototype.get_child_by_name = function(name)
+		{
+			console.log("GET_CHILD",this.name,name);
+			for(var i=0;i<this.child.length;i++)
+			{
+				if(this.child[i].name == name)
+				{
+					return this.child[i];
+				}
+			}
+			return null;
+		};
+		TagNode.prototype.show_child = function(parent_div)
+		{
+			console.log("SHOW_CHILD OF",this.name,this.child.length,"@",parent_div);
+			for(var i=0;i<this.child.length;i++)
+			{
+				console.log("CALL_FROM",this.name,"TO",this.child[i].name,this.child[i].child.length);
+				this.child[i].show(parent_div);
+			}
+		};
+		TagNode.prototype.path_to_div = function()
+		{
+			//console.log("GET PATH_DIV",this.searchpath);
+			return "div_" + this.searchpath.join("_");
+		};
+		TagNode.prototype.path_to_markdown_table_ID = function()
+		{
+			//console.log("GET PATH_DIV",this.searchpath);
+			return "markdown_" + this.searchpath.join("_");
+		};
+	}
+
+</script>
+
+</head>
+<body>
+<div style="width:100%;">
+<div id="top">
+	<p>Make Steemit Blog Contents by @junn</p>
+	ID : <input type="text" id="id">
+	<input type="button" id="submit_btn" value="Init" onClick="getTable(0);">	
+</div>
+<div id="head"></div>
+<!--<div id="classify">
+<p><b>REFRESH WINDOW</b> is you want to restart</p>
+	<p>Recommended Auto-classify <b>Value</b> : High 0.7, Low 0.3</p>
+	High Value : <input type="text" id="set_high">
+	Low Value : <input type="text" id="set_low">
+	<input type="button" id="classify_btn" value="Classify" onClick="autoClassify();">
+</div>-->
+<div id="loading"></div>
+<div id="status"></div>
+<div id="contents"></div>
+
+<script>
+
+var total_count = 1;
+var sub_count = 1;
+var tags = {}
+var count_array = []
+var data = []
+var rootNode = new TagNode("all",1,null);
+
+
+function getTable(type)
+{
+	console.log("Start & Init",type);
+	clearContents("#contents");
+	//ButtonChange();
+	var member = '';
+	var member = $("#id").val(); 
+	$.cookie("blog_id", member);
+	console.log("member",member);
+	var param = {
+		"tag" : member,
+		"limit":100
+	};
+	if(type == 1)
+	{
+		param = {
+			"tag" : member,
+			"limit":100,
+			"start_author": $("#last_id").val(), 
+			"start_permlink": $("#last_permlink").val()
+		};
+		console.log("More Data",param);
+	}
+	else
+	{
+		rootNode.child = [];
+		rootNode.data = [];
+	}
+
+	clearContents('#head');
+	writeContents('#head',"Search Blog : " + $("#id").val());
+
+	LoadingOn();
+	steem.api.getDiscussionsByBlog(param,function(err, response){
+		LoadingOff();
+
+		console.log("get",response);
+		if(response.length == 100)
+		{
+			//추가처리
+			clearContents("#head");
+			var msg = "<p>100 data loaded(1 might be duplicated). There may be more data. You can try retrieve it.</p>";
+			var form = "<form action='#'>	\
+						Last Post Author : <input type='text' id='last_id' value='"+ response[99].author +"'>	\
+						Last Post Permlink : <input type='text' id='last_permlink' value='"+ response[99].permlink + "'> \
+						<input type='button' id='submit_btn' value='Keep Search' onClick='getTable(1)''> \
+						</form>";
+			writeContents("#head",msg+form);
+		}
+		else
+		{
+			writeContents("#head","<p>Load " + (response.length - 1) + " data, No more data left</p>");
+		}
+		writeContents("#head","<a href='#' onClick='javascript:Resteem();'>Resteem Post Seperation / Merge</a>");
+
+		for(var i=(0+(param.start_author?1:0));i<response.length;i++)	//type = 0 New, type = 1 Continue, then index 0 is repeated.
+		{
+			
+			var data = response[i];
+			console.log(i,data[i]);
+			var mydata = {
+				'author'	:data.author,
+				'image_src'	:(JSON.parse(data.json_metadata)['image'])?JSON.parse(data.json_metadata)['image'][0]:null,
+				'json_tags'	:(JSON.parse(data.json_metadata)['tags'])?JSON.parse(data.json_metadata)['tags']:null,
+				'last_update'	:data.last_update,
+				'permlink'	:data.permlink,
+				'title'		:data.title,
+				'url'		:data.url,
+				'created'	:data.created
+			};
+			if(mydata.image_src != null)
+			{
+				mydata.image_src = mydata.image_src.replace(/\n/g, "").replace(/\r/g, "");
+			}
+			rootNode.add_data(mydata);
+			delete data;
+		}
+		delete response;
+		rootNode.show("#contents");
+		return;
+	});
+
+}
+
+	jQuery(document).ready(function($) 
+	{
+		console.log("COOKIE",$.cookie("blog_id"));
+		if($.cookie("blog_id"))
+		{
+			$("#id").val($.cookie("blog_id"));
+		}
+
+	});
+
+
+</script>
+</div>
+</body>
+</html>
+

@@ -151,6 +151,26 @@ tr:nth-child(odd) {background: #FFF}
 <script src="https://cdn.steemjs.com/lib/latest/steem.min.js"></script>
 
 <script>
+	function CopyToClipboard(json_path){
+
+		var thisNode = rootNode;
+		for(var i=1;i<json_path.length;i++)
+		{
+			thisNode = thisNode.get_child_by_name(json_path[i]);
+		};
+		console.log("COPY",json_path,thisNode.name);
+		//var temp = $('#'+thisNode.path_to_markdown_table_ID()).html();
+
+
+		var $temp = $("<textarea>");
+    	$("body").append($temp);
+    	var x = $('#'+thisNode.path_to_markdown_table_ID()).text().trim().replace(/<br>/g, '\n');
+    	$temp.val(x).select();
+    	document.execCommand("copy");
+    	$temp.remove();
+
+		alert("[" + thisNode.searchpath.join(" > ") + "] markdown code was copied.");
+	}
 	function Resteem()
 	{
 		var tag = "_resteemed";
@@ -508,10 +528,11 @@ tr:nth-child(odd) {background: #FFF}
 			}
 			writeContents("#"+this.path_to_div(),
 			"<div>[<b>"+this.searchpath.join(" > ")+"</b>]" +
-				  "--[<a href='#' onclick='javascript:ShowMarkdown("+JSON.stringify(this.searchpath)+");'>SHOW MARKDOWN</a>]" +
-				 "--[<a href='#' onclick='javascript:HideMarkdown("+JSON.stringify(this.searchpath)+");'>HIDE MARKDOWN</a>]" + 
+				  "-[<a href='#' onclick='javascript:ShowMarkdown("+JSON.stringify(this.searchpath)+");'>SHOW MARKDOWN</a>]" +
+				 "-[<a href='#' onclick='javascript:HideMarkdown("+JSON.stringify(this.searchpath)+");'>HIDE MARKDOWN</a>]" + 
+				 "-[<a href='#' onclick='javascript:CopyToClipboard("+JSON.stringify(this.searchpath)+");'>COPY(Ctrl+C)</a>]" + 
 					(this.parent?"--[<a href='#' onclick='javascript:Remove("+JSON.stringify(this.searchpath)+");'>REMOVE</a>]":"") + 
-				"--------[<a href='#' onclick='javascript:MergeAll();'>MERGE ALL</a>]" + 
+				"----[<a href='#' onclick='javascript:MergeAll();'>MERGE ALL</a>]" + 
 
 			"</div>");
 			this.show_tags("#"+this.path_to_div());

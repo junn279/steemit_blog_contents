@@ -216,7 +216,7 @@ tr:nth-child(odd) {background: #FFF}
 	}
 	function refreshAll()
 	{
-		console.log("RefreshAll");
+		console.log("RefreshAll", $('#imageExclude').is(':checked'));
 		clearContents("#contents");
 		rootNode.show("#contents");
 
@@ -412,18 +412,40 @@ tr:nth-child(odd) {background: #FFF}
 			var textarea_html = 
 				"<textarea id='"+ this.path_to_markdown_table_ID()+"' class='markdown' style='display:none;'>"; 
 
-				textarea_html += "| <center>No.</center> | <center>Image</center> | <center>Author</center> | <center>Title</center> | <center>Created</center> |\r\n" +
-				"|:-------:|:-------:|:----:|:--------:|:-------:|\r\n";
-			this.data.sort(function(first, second) 
+			if($('#imageExclude').is(':checked'))
 			{
-		    	return new Date(second.created) - new Date(first.created);
-			});
-			for(var i=0;i<this.data.length;i++)
+				textarea_html += 
+					"| <center>No.</center> |  <center>Title</center> | <center>Author</center> | <center>Created</center> |\r\n" +
+					"|:-------:|:-------:|:--------:|:-------:|\r\n";
+				this.data.sort(function(first, second) 
+				{
+			    	return new Date(second.created) - new Date(first.created);
+				});
+				for(var i=0;i<this.data.length;i++)
+				{
+					textarea_html += "|" + " <center>" + (this.data.length - i) + "</center> "+ 
+									 "|" + " [" +  this.data[i].title + "](https://steemit.com" +this.data[i].url + ") " +
+									 "|" + " <center>["+ this.data[i].author + "](https://steemit.com/@" + this.data[i].author + ")</center> " +
+									 "|" + " <center>" + this.data[i].created.substring(0,10) +"</center> "+
+									 "|\r\n";
+				}
+			}
+			else
 			{
-				textarea_html += "| <center>" + (this.data.length - i) + "</center> | " +
-					 "[![Image]("+this.data[i].image_src+")](https://steemit.com" + 
-					 this.data[i].url + ")" + " | <center>["+ this.data[i].author + "](https://steemit.com/@" + this.data[i].author + ")</center> | [" + 
-					 this.data[i].title + "](https://steemit.com" +this.data[i].url + ") | <center>" + this.data[i].created.substring(0,10) +"</center> |\r\n";
+				textarea_html += "| <center>No.</center> | <center>Image</center> | <center>Title</center> | <center>Author</center> | <center>Created</center> |\r\n" +
+					"|:-------:|:-------:|:----:|:--------:|:-------:|\r\n";
+				this.data.sort(function(first, second) 
+				{
+			    	return new Date(second.created) - new Date(first.created);
+				});
+				for(var i=0;i<this.data.length;i++)
+				{
+					textarea_html += "| <center>" + (this.data.length - i) + "</center> "+ 
+									"| " + "[![Image]("+this.data[i].image_src+")](https://steemit.com" + this.data[i].url + ") " + 
+									"| [" +  this.data[i].title + "](https://steemit.com" +this.data[i].url + ") "+
+									"| <center>["+ this.data[i].author + "](https://steemit.com/@" + this.data[i].author + ")</center> "+
+									"| <center>" + this.data[i].created.substring(0,10) +"</center> |\r\n";
+				}
 			}
 			textarea_html += "</textarea>";
 			//console.log(textarea_html);
@@ -437,7 +459,7 @@ tr:nth-child(odd) {background: #FFF}
 				"<table class='post_table'>" + 
 				"<thead>" +
 					"<tr>" + 
-						"<td colspan=5>" + 
+						"<td colspan=4>" + 
 							"Table : " + this.name +
 						"</td>" + 
 					"</tr>" + 
@@ -453,21 +475,41 @@ tr:nth-child(odd) {background: #FFF}
 
 			for(var i=0;i<this.data.length;i++)
 			{
-				table_html += "<tr>"+
-							"<td>" + (this.data.length - i) + "</td>" +
-							"<td><img src=\""+ this.data[i].image_src +"\" width=50></td>" +
-							"<td><center>"+ 
-								"<a href='https://steemit.com/@" + this.data[i].author + "/' target='_blank'>" + 
-								"@" + this.data[i].author + 
-								"</a>" + 
-							"</center></td>" + 
-							"<td><center>"+ 
-								"<a href='https://steemit.com" + this.data[i].url + "/' target='_blank'>" + 
-								this.data[i].title +
-								"</a>" + 
-							"</center></td>" + 
-							"<td><center>"+ this.data[i].created.substring(0,10) + "</center></td>"+
-							"</tr>";
+				if($('#imageExclude').is(':checked'))
+				{
+					table_html += "<tr>"+
+								"<td>" + (this.data.length - i) + "</td>" +
+								"<td><center>"+ 
+									"<a href='https://steemit.com" + this.data[i].url + "/' target='_blank'>" + 
+									this.data[i].title +
+									"</a>" + 
+								"</center></td>" + 
+								"<td><center>"+ 
+									"<a href='https://steemit.com/@" + this.data[i].author + "/' target='_blank'>" + 
+									"@" + this.data[i].author + 
+									"</a>" + 
+								"</center></td>" + 
+								"<td><center>"+ this.data[i].created.substring(0,10) + "</center></td>"+
+								"</tr>";	
+				}
+				else
+				{
+					table_html += "<tr>"+
+								"<td>" + (this.data.length - i) + "</td>" +
+								"<td><img src=\""+ this.data[i].image_src +"\" width=50></td>" +
+								"<td><center>"+ 
+									"<a href='https://steemit.com" + this.data[i].url + "/' target='_blank'>" + 
+									this.data[i].title +
+									"</a>" + 
+								"</center></td>" + 
+								"<td><center>"+ 
+									"<a href='https://steemit.com/@" + this.data[i].author + "/' target='_blank'>" + 
+									"@" + this.data[i].author + 
+									"</a>" + 
+								"</center></td>" + 
+								"<td><center>"+ this.data[i].created.substring(0,10) + "</center></td>"+
+								"</tr>";
+				}
 			}
 			table_html += "</tbody>"  + "</table>";
 			//console.log(table_html);
@@ -528,10 +570,10 @@ tr:nth-child(odd) {background: #FFF}
 			}
 			writeContents("#"+this.path_to_div(),
 			"<div>[<b>"+this.searchpath.join(" > ")+"</b>]" +
-				  "-[<a href='#' onclick='javascript:ShowMarkdown("+JSON.stringify(this.searchpath)+");'>SHOW MARKDOWN</a>]" +
-				 "-[<a href='#' onclick='javascript:HideMarkdown("+JSON.stringify(this.searchpath)+");'>HIDE MARKDOWN</a>]" + 
-				 "-[<a href='#' onclick='javascript:CopyToClipboard("+JSON.stringify(this.searchpath)+");'>COPY(Ctrl+C)</a>]" + 
-					(this.parent?"--[<a href='#' onclick='javascript:Remove("+JSON.stringify(this.searchpath)+");'>REMOVE</a>]":"") + 
+				  "-[<a href='#' onclick='javascript:ShowMarkdown("+JSON.stringify(this.searchpath)+");'>SHOW</a>]" +
+				 "-[<a href='#' onclick='javascript:HideMarkdown("+JSON.stringify(this.searchpath)+");'>HIDE</a>]" + 
+				 "-[<a href='#' onclick='javascript:CopyToClipboard("+JSON.stringify(this.searchpath)+");'>COPY MARKDOWN</a>]" + 
+					(this.parent?"--[<a href='#' onclick='javascript:Remove("+JSON.stringify(this.searchpath)+");'>REMOVE TAG</a>]":"") + 
 				"----[<a href='#' onclick='javascript:MergeAll();'>MERGE ALL</a>]" + 
 
 			"</div>");
@@ -670,7 +712,10 @@ function getTable(type)
 		{
 			writeContents("#head","<p>Load " + (response.length - 1) + " data, No more data left</p>");
 		}
-		writeContents("#head","<a href='#' onClick='javascript:Resteem();'>Resteem Post Seperation / Merge</a>");
+		writeContents("#head","<a href='#' onClick='javascript:Resteem();'>Resteemed Post Seperation / Merge</a>");
+		writeContents("#head","<br/><input id=\"imageExclude\" type=\"checkbox\" onClick='javascript:refreshAll();'><label for=\"imageExclude\">Exclude Image</label>");
+		
+		
 
 		for(var i=(0+(param.start_author?1:0));i<response.length;i++)	//type = 0 New, type = 1 Continue, then index 0 is repeated.
 		{
